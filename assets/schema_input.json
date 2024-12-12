@@ -18,6 +18,17 @@
                 "format": "file-path",
                 "exists": true,
                 "pattern": "^\\S+\\.(bam|fastq|fq|fastq\\.gz|fq\\.gz)$",
+                "allOf": [
+                    {
+                        "if": {
+                            "pattern": "^\\S+\\.bam$"
+                        },
+                        "then": {
+                            "pattern": "^\\S+_(pe|se)\\.bam$",
+                            "errorMessage": "If file1 ends with .bam, it must contain '_pe.bam' or '_se.bam', defining paired-end or single-end"
+                        }
+                    }
+                ],
                 "errorMessage": "File 1 must be provided, cannot contain spaces, and must have an allowed extension (.bam, .fastq, .fq, .fastq.gz, .fq.gz)"
             },
             "file2": {
@@ -38,6 +49,6 @@
                 "errorMessage": "Replicate must be a positive integer"
             }
         },
-        "required": ["sample", "fastq_1", "type", "replicate"]
+        "required": ["sample", "file1", "type", "replicate"]
     }
 }
