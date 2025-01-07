@@ -83,18 +83,16 @@ workflow PIPELINE_INITIALISATION {
             replicate : row.replicate as int
         ]
 
-        // Generate filenames based on the presence of file1 and file2
+        // Generate file paths based on the presence of file1 and file2
         def reads = []
         if (row.file1) {
-            def name1 = "${row.sample}_${row.type}_${row.replicate}${row.file2 ? '_pe1' : ''}"
-            reads << [name: name1, file: row.file1]
+            reads << row.file1 // Add file1 path
         }
         if (row.file2) {
-            def name2 = "${row.sample}_${row.type}_${row.replicate}_pe2"
-            reads << [name: name2, file: row.file2]
+            reads << row.file2 // Add file2 path
         }
 
-        // Return metadata and file details as a tuple
+        // Return metadata and file paths as a tuple
         return [meta, reads]
     }
     .set { ch_samplesheet }
