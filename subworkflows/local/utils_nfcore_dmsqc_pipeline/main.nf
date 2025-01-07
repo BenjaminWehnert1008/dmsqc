@@ -68,39 +68,30 @@ workflow PIPELINE_INITIALISATION {
     //
 
     Channel
-        .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
-        .map {
-            sample, type, replicate, file1, file2 ->
-                def paired_end = null
-
-                if (file1.endsWith('.bam')) {
-                    if (file1.contains('_pe.bam')) {
-                        paired_end = true
-                    } else if (file1.contains('_se.bam')) {
-                        paired_end = false
-                    } else {
-                        throw new IllegalArgumentException("BAM file must specify '_pe.bam' or '_se.bam'")
-                    }
-                } else {
-                    if (file2) {
-                        paired_end = true
-                    } else {
-                        paired_end = false
-                    }
-                }
-
-                return [ sample, [ paired_end: paired_end, type: type, replicate: replicate ], [ file1, file2 ].findAll { it != null } ]
+    // Load the samplesheet file from the input parameter
+    .fromPath(params.input)
+    // Split the CSV file into rows with headers
+    .splitCsv(header: true)
+    .map { row ->
+        // Create metadata object containing sample, type, and replicate information
+        def meta = [
+            sample    : row.sample,    // The sample name
+            type      : row.type,      // The type (input, output, quality)
+            replicate : row.replicate as int // Convert replicate to an integer
+        ]
+        // Extract file1 and optionally file2 into a list of reads
+        def reads = [row.file1]
+        if (row.file2) {
+            reads << row.file2 // Add file2 if it exists
         }
-        .groupTuple()
-        .map { samplesheet ->
-            validateInputSamplesheet(samplesheet)
-        }
-        .map {
-            sample, fastqs ->
-                return [ sample, fastqs.flatten() ]
-        }
-        .set { ch_samplesheet }
 
+        // Return metadata and file paths as a tuple
+        return [meta, reads]
+    }
+    // Assign the resulting channel to the variable 'ch_samplesheet'
+    .set { ch_samplesheet }
+
+// Emit the samplesheet channel and an empty version channel for use in the workflow
     emit:
     samplesheet = ch_samplesheet
     versions    = ch_versions
