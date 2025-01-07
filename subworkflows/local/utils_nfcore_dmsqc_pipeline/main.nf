@@ -79,7 +79,7 @@ workflow PIPELINE_INITIALISATION {
     .map { row ->
         // Construct metadata object
         def meta = [
-            id        : "${row.sample}_${row.replicate}${row.file2 ? "_${row.type}" : ''}", // Dynamic ID based on sample, replicate, and type
+            id        : "${row.sample}_${row.type}_${row.replicate}", // Dynamic ID based on sample, type, and replicate
             sample    : row.sample,
             type      : row.type,
             replicate : row.replicate as int
