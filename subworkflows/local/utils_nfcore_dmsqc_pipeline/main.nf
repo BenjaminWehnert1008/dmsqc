@@ -75,9 +75,12 @@ workflow PIPELINE_INITIALISATION {
         !(row.file1.endsWith('.bam') || (row.file2 && row.file2.endsWith('.bam')))
     }
     .map { row ->
-        // Construct metadata object
+        // Determine suffix based on the presence of file2
+        def suffix = row.file2 ? "_pe" : "_se"
+
+        // Construct metadata object with updated ID
         def meta = [
-            id        : "${row.sample}_${row.type}_${row.replicate}", // Base ID
+            id        : "${row.sample}_${row.type}_${row.replicate}${suffix}", // Base ID with suffix
             sample    : row.sample,
             type      : row.type,
             replicate : row.replicate as int
