@@ -68,9 +68,7 @@ workflow PIPELINE_INITIALISATION {
     //
 
     Channel
-    // Load the samplesheet file from the input parameter
     .fromPath(params.input)
-    // Split the CSV file into rows with headers
     .splitCsv(header: true)
     .filter { row ->
         // Skip rows where file1 or file2 are BAM files
@@ -79,21 +77,26 @@ workflow PIPELINE_INITIALISATION {
     .map { row ->
         // Construct metadata object
         def meta = [
-            id        : "${row.sample}_${row.type}_${row.replicate}", // Dynamic ID based on sample, type, and replicate
+            id        : "${row.sample}_${row.type}_${row.replicate}", // Base ID
             sample    : row.sample,
             type      : row.type,
             replicate : row.replicate as int
         ]
-        // Extract file paths for reads
-        def reads = [row.file1]
+
+        // Generate filenames based on the presence of file1 and file2
+        def reads = []
+        if (row.file1) {
+            def name1 = "${row.sample}_${row.type}_${row.replicate}${row.file2 ? '_pe1' : ''}"
+            reads << [name: name1, file: row.file1]
+        }
         if (row.file2) {
-            reads << row.file2
+            def name2 = "${row.sample}_${row.type}_${row.replicate}_pe2"
+            reads << [name: name2, file: row.file2]
         }
 
-        // Return metadata and file paths as a tuple
+        // Return metadata and file details as a tuple
         return [meta, reads]
     }
-    // Assign the resulting channel to the variable 'ch_samplesheet'
     .set { ch_samplesheet }
 
 // Emit the samplesheet channel and an empty version channel for use in the workflow
