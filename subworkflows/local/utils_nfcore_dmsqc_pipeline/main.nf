@@ -72,17 +72,22 @@ workflow PIPELINE_INITIALISATION {
     .fromPath(params.input)
     // Split the CSV file into rows with headers
     .splitCsv(header: true)
+    .filter { row ->
+        // Skip rows where file1 or file2 are BAM files
+        !(row.file1.endsWith('.bam') || (row.file2 && row.file2.endsWith('.bam')))
+    }
     .map { row ->
-        // Create metadata object containing sample, type, and replicate information
+        // Construct metadata object
         def meta = [
-            sample    : row.sample,    // The sample name
-            type      : row.type,      // The type (input, output, quality)
-            replicate : row.replicate as int // Convert replicate to an integer
+            id        : "${row.sample}_${row.replicate}${row.file2 ? "_${row.type}" : ''}", // Dynamic ID based on sample, replicate, and type
+            sample    : row.sample,
+            type      : row.type,
+            replicate : row.replicate as int
         ]
-        // Extract file1 and optionally file2 into a list of reads
+        // Extract file paths for reads
         def reads = [row.file1]
         if (row.file2) {
-            reads << row.file2 // Add file2 if it exists
+            reads << row.file2
         }
 
         // Return metadata and file paths as a tuple
